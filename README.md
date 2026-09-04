@@ -38,7 +38,7 @@ The investigation sought to answer five questions:
 
 The incident contained two medium-severity alerts associated with the same Windows 11 endpoint. The first activity occurred at approximately 8:15 AM, followed by a second alert at approximately 9:14 AM. The alerts were categorized as **Persistence** and correlated because they occurred on the same device.
 
-![Incident overview](evidence/01-incident-overview.png)
+![Incident overview](01-incident-overview.png)
 
 ### Initial hypothesis
 
@@ -50,11 +50,11 @@ The first alert showed the following general sequence:
 
 `wininit.exe` → `services.exe` → `MicrosoftEdgeUpdate.exe` → Edge installer → `setup.exe` → `RunOnce` registry modification
 
-![First alert process tree](evidence/02-first-alert-process-tree.png)
+![First alert process tree](02-first-alert-process-tree.png)
 
 The second alert showed another Edge maintenance sequence involving `elevation_service.exe` and `setup.exe`. Its command-line arguments referenced renaming the Edge executable and deleting old versions.
 
-![Second alert process tree](evidence/03-second-alert-process-tree.png)
+![Second alert process tree](03-second-alert-process-tree.png)
 
 The parent-child relationships were consistent with a system-level Microsoft Edge update. No suspicious PowerShell, command shell, script interpreter, temporary-directory payload, or unrelated user-launched process was observed in the alert chain.
 
@@ -72,7 +72,7 @@ The value data referenced the Microsoft Edge/WebView installer and used argument
 --channel=stable --delete-old-versions --system-level --verbose-logging --on-logon
 ```
 
-![RunOnce registry details](evidence/04-runonce-registry-details.png)
+![RunOnce registry details](04-runonce-registry-details.png)
 
 The `--on-logon` argument explains the use of `RunOnce`: the installer was configured to complete cleanup during the next logon and remove older Edge components.
 
@@ -80,7 +80,7 @@ The `--on-logon` argument explains the use of `RunOnce`: the installer was confi
 
 The observed behavior maps to **T1547.001 — Registry Run Keys / Startup Folder**, under the Persistence and Privilege Escalation tactics.
 
-![MITRE ATT&CK mapping](evidence/05-mitre-mapping.png)
+![MITRE ATT&CK mapping](05-mitre-mapping.png)
 
 This mapping describes the behavior, not the verdict. Attackers can abuse these registry locations, but legitimate applications also use them for installation and maintenance.
 
@@ -88,11 +88,11 @@ This mapping describes the behavior, not the verdict. Attackers can abuse these 
 
 The referenced file was identified as `setup.exe`. Its hash was searched in VirusTotal without uploading the executable. The result returned **0/70 security-vendor detections**.
 
-![VirusTotal result with hash redacted](evidence/06-virustotal-redacted.png)
+![VirusTotal result with hash redacted](06-virustotal-redacted.png)
 
 VirusTotal also reported a valid digital signature and identified the file as Microsoft Edge Installer version `152.0.4191.62`. This matched the product name, version, path, and command-line evidence observed in Defender XDR.
 
-![Digital-signature verification](evidence/07-signature-verification.png)
+![Digital-signature verification](07-signature-verification.png)
 
 VirusTotal results were treated as supporting evidence rather than a standalone verdict. The conclusion relied on correlation between file reputation, signature, path, command line, and process ancestry.
 
@@ -119,7 +119,7 @@ DeviceRegistryEvents
 
 The query returned five matching events across three dates: August 19, August 29, and September 4. Each event was initiated by `setup.exe`, identified as Microsoft Corporation and Microsoft Edge Installer.
 
-![Advanced Hunting baseline](evidence/08-advanced-hunting-baseline.png)
+![Advanced Hunting baseline](08-advanced-hunting-baseline.png)
 
 The expanded September 4 result confirmed:
 
@@ -129,7 +129,7 @@ The expanded September 4 result confirmed:
 - A stable-channel cleanup command
 - Execution under the `SYSTEM` account
 
-![Expanded Advanced Hunting evidence](evidence/09-advanced-hunting-event-details.png)
+![Expanded Advanced Hunting evidence](09-advanced-hunting-event-details.png)
 
 The historical recurrence established a normal maintenance baseline and reduced the likelihood of one-time malicious persistence.
 
